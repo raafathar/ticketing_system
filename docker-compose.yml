@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ticketing_system_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ticketing_system
+      POSTGRES_PASSWORD: ticketing_system123
+      POSTGRES_DB: ticketing_system
+    ports:
+      - "5433:5432"
+    volumes:
+      - ticketing_system_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketing_system -d ticketing_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: ticketing_system_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4213:4213"
+
+  # frontend:
+  #   build: ./frontend
+  #   container_name: ticketing_system_frontend
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend
+  #   ports:
+  #     - "5173:80"
+
+volumes:
+  ticketing_system_pgdata:
