@@ -13,6 +13,7 @@ import { logger } from './utils/logger.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import categoryRoutes from './routes/categories.js';
+import parentCategoryRoutes from './routes/parent-categories.js';
 import slaRoutes from './routes/sla.js';
 import departmentRoutes from './routes/departments.js';
 import locationRoutes from './routes/locations.js';
@@ -54,6 +55,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/parent-categories', parentCategoryRoutes);
 app.use('/api/sla', slaRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/locations', locationRoutes);

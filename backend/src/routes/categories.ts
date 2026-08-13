@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, eq, sql, and } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '../db/index.js';
-import { ticketCategories } from '../db/schema.js';
+import { parentCategories, ticketCategories, tickets } from '../db/schema.js';
 import { ROLES } from '../config/index.js';
 import { authenticate, authorize, type AuthRequest } from '../middleware/auth.js';
 import { writeAuditLog } from '../utils/audit.js';
@@ -19,33 +19,41 @@ const categorySchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-type CategoryNode = typeof ticketCategories.$inferSelect & { children: CategoryNode[] };
+type CategoryNode = {
+  id: number;
+  name: string;
+  parentId: number | null;
+  isActive: boolean;
+  createdAt: Date;
+  children: CategoryNode[];
+};
 
-const buildTree = (rows: (typeof ticketCategories.$inferSelect)[]) => {
-  const map = new Map<number, CategoryNode>();
-  rows.forEach((r) => map.set(r.id, { ...r, children: [] }));
-  const roots: CategoryNode[] = [];
-  rows.forEach((r) => {
-    const node = map.get(r.id)!;
-    if (r.parentId && map.has(r.parentId)) {
-      map.get(r.parentId)!.children.push(node);
-    } else {
-      roots.push(node);
-    }
-  });
+const buildTree = async (): Promise<CategoryNode[]> => {
+  const parents = await db.select().from(parentCategories).orderBy(asc(parentCategories.name));
+  const categories = await db.select().from(ticketCategories).orderBy(asc(ticketCategories.name));
+
+  const roots: CategoryNode[] = parents.map((p) => ({
+    ...p,
+    parentId: null,
+    children: categories
+      .filter((c) => c.parentId === p.id)
+      .map((c) => ({ ...c, children: [] as CategoryNode[] })),
+  }));
+
+  categories
+    .filter((c) => c.parentId === null)
+    .forEach((c) => roots.push({ ...c, children: [] as CategoryNode[] }));
+
   return roots;
 };
 
 router.get('/', async (_req: AuthRequest, res, next) => {
   try {
-    const rows = await db
-      .select()
-      .from(ticketCategories)
-      .orderBy(asc(ticketCategories.name));
+    const items = await buildTree();
     const count = await db
       .select({ c: sql<number>`count(*)::int` })
       .from(ticketCategories);
-    successResponse(res, 200, { items: buildTree(rows), total: count[0]?.c ?? 0 });
+    successResponse(res, 200, { items, total: count[0]?.c ?? 0 });
   } catch (error) {
     next(error);
   }
@@ -70,12 +78,16 @@ router.post('/', authorize(ROLES.ADMIN), async (req: AuthRequest, res, next) => 
     const data = parsed.data;
 
     if (data.parentId) {
-      const parent = await db.query.ticketCategories.findFirst({
-        where: eq(ticketCategories.id, data.parentId),
+      const parent = await db.query.parentCategories.findFirst({
+        where: eq(parentCategories.id, data.parentId),
       });
-      if (!parent) throw new AppError(404, 'Kategori induk tidak ditemukan');
-      if (parent.parentId) throw new AppError(400, 'Kategori induk tidak boleh berupa subkategori');
+      if (!parent) throw new AppError(404, 'Parent kategori tidak ditemukan');
     }
+
+    const dup = await db.query.ticketCategories.findFirst({
+      where: sql`lower(${ticketCategories.name}) = ${data.name.toLowerCase()}`,
+    });
+    if (dup) throw new AppError(409, 'Kategori dengan nama tersebut sudah ada');
 
     const created = await db.insert(ticketCategories).values({
       name: data.name,
@@ -109,6 +121,23 @@ router.patch('/:id', authorize(ROLES.ADMIN), async (req: AuthRequest, res, next)
     if (!parsed.success) throw new AppError(422, 'Validasi gagal', parsed.error.errors);
     const data = parsed.data;
 
+    if (data.parentId !== undefined && data.parentId !== null) {
+      const parent = await db.query.parentCategories.findFirst({
+        where: eq(parentCategories.id, data.parentId),
+      });
+      if (!parent) throw new AppError(404, 'Parent kategori tidak ditemukan');
+    }
+
+    if (data.name) {
+      const dup = await db.query.ticketCategories.findFirst({
+        where: and(
+          sql`lower(${ticketCategories.name}) = ${data.name.toLowerCase()}`,
+          sql`${ticketCategories.id} != ${id}`
+        ),
+      });
+      if (dup) throw new AppError(409, 'Kategori dengan nama tersebut sudah ada');
+    }
+
     const updated = await db
       .update(ticketCategories)
       .set({
@@ -124,6 +153,7 @@ router.patch('/:id', authorize(ROLES.ADMIN), async (req: AuthRequest, res, next)
       action: 'UPDATE',
       entity: 'category',
       entityId: id,
+      oldValue: JSON.stringify(existing),
       newValue: JSON.stringify(updated[0]),
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
@@ -138,11 +168,16 @@ router.patch('/:id', authorize(ROLES.ADMIN), async (req: AuthRequest, res, next)
 router.delete('/:id', authorize(ROLES.ADMIN), async (req: AuthRequest, res, next) => {
   try {
     const id = Number(req.params.id);
-    const children = await db.select().from(ticketCategories).where(eq(ticketCategories.parentId, id));
-    if (children.length) throw new AppError(400, 'Kategori memiliki subkategori. Hapus subkategori terlebih dahulu.');
-
     const existing = await db.query.ticketCategories.findFirst({ where: eq(ticketCategories.id, id) });
     if (!existing) throw new AppError(404, 'Kategori tidak ditemukan');
+
+    const usedByTickets = await db
+      .select({ c: sql<number>`count(*)::int` })
+      .from(tickets)
+      .where(eq(tickets.categoryId, id));
+    if (usedByTickets[0]?.c) {
+      throw new AppError(400, 'Kategori masih digunakan oleh tiket. Tidak dapat dihapus.');
+    }
 
     await db.delete(ticketCategories).where(eq(ticketCategories.id, id));
 
