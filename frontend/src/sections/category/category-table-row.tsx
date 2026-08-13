@@ -66,7 +66,6 @@ export function CategoryTableRow({
               alignItems: 'center',
             }}
           >
-            <Avatar alt={row.name}>{row.name.charAt(0).toUpperCase()}</Avatar>
             <Typography variant="subtitle2" noWrap>
               {row.name}
             </Typography>
