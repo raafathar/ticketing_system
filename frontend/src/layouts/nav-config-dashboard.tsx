@@ -30,6 +30,9 @@ export const navData = [
     children: [
       { title: 'Department', path: '/department' },
       { title: 'Location', path: '/location' },
+      { title: 'SLA', path: '/sla' },
+      { title: 'Parent Category', path: '/parent-category' },
+      { title: 'Category', path: '/category' },
     ],
   },
   {

@@ -19,6 +19,9 @@ export const BlogPage = lazy(() => import('src/pages/blog'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const DepartmentPage = lazy(() => import('src/pages/department'));
 export const LocationPage = lazy(() => import('src/pages/location'));
+export const SlaPage = lazy(() => import('src/pages/sla'));
+export const CategoryPage = lazy(() => import('src/pages/category'));
+export const ParentCategoryPage = lazy(() => import('src/pages/parent-category'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
@@ -59,6 +62,9 @@ export const routesSection: RouteObject[] = [
       { path: 'user', element: <UserPage /> },
       { path: 'department', element: <DepartmentPage /> },
       { path: 'location', element: <LocationPage /> },
+      { path: 'sla', element: <SlaPage /> },
+      { path: 'category', element: <CategoryPage /> },
+      { path: 'parent-category', element: <ParentCategoryPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'blog', element: <BlogPage /> },
     ],
