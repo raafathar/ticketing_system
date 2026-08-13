@@ -7,9 +7,10 @@ const icon = (name: string) => <SvgColor src={`/assets/icons/navbar/${name}.svg`
 
 export type NavItem = {
   title: string;
-  path: string;
-  icon: React.ReactNode;
+  path?: string;
+  icon?: React.ReactNode;
   info?: React.ReactNode;
+  children?: NavItem[];
 };
 
 export const navData = [
@@ -22,6 +23,14 @@ export const navData = [
     title: 'User',
     path: '/user',
     icon: icon('ic-user'),
+  },
+  {
+    title: 'Master Data',
+    icon: icon('ic-master-data'),
+    children: [
+      { title: 'Department', path: '/department' },
+      { title: 'Location', path: '/location' },
+    ],
   },
   {
     title: 'Product',

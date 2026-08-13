@@ -1,7 +1,7 @@
 import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
 
-import { useEffect } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
+import { Fragment, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import ListItem from '@mui/material/ListItem';
@@ -13,6 +13,7 @@ import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
 import { Logo } from 'src/components/logo';
+import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
 import { NavUpgrade } from '../components/nav-upgrade';
@@ -138,50 +139,9 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
               flexDirection: 'column',
             }}
           >
-            {data.map((item) => {
-              const isActived = item.path === pathname;
-
-              return (
-                <ListItem disableGutters disablePadding key={item.title}>
-                  <ListItemButton
-                    disableGutters
-                    component={RouterLink}
-                    href={item.path}
-                    sx={[
-                      (theme) => ({
-                        pl: 2,
-                        py: 1,
-                        gap: 2,
-                        pr: 1.5,
-                        borderRadius: 0.75,
-                        typography: 'body2',
-                        fontWeight: 'fontWeightMedium',
-                        color: theme.vars.palette.text.secondary,
-                        minHeight: 44,
-                        ...(isActived && {
-                          fontWeight: 'fontWeightSemiBold',
-                          color: theme.vars.palette.primary.main,
-                          bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
-                          '&:hover': {
-                            bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
-                          },
-                        }),
-                      }),
-                    ]}
-                  >
-                    <Box component="span" sx={{ width: 24, height: 24 }}>
-                      {item.icon}
-                    </Box>
-
-                    <Box component="span" sx={{ flexGrow: 1 }}>
-                      {item.title}
-                    </Box>
-
-                    {item.info && item.info}
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
+            {data.map((item) => (
+              <NavListItem key={item.title} item={item} pathname={pathname} />
+            ))}
           </Box>
         </Box>
       </Scrollbar>
@@ -190,5 +150,168 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
 
       <NavUpgrade />
     </>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+type NavListItemProps = {
+  item: NavItem;
+  pathname: string;
+};
+
+function NavListItem({ item, pathname }: NavListItemProps) {
+  const children = item.children ?? [];
+  const isChildActive = children.some((child) => child.path === pathname);
+  const isActived = item.path === pathname || isChildActive;
+
+  const [open, setOpen] = useState(isChildActive);
+
+  useEffect(() => {
+    if (isChildActive) {
+      setOpen(true);
+    }
+  }, [isChildActive]);
+
+  const buttonSx = (theme: Theme) => ({
+    pl: 2,
+    py: 1,
+    gap: 2,
+    pr: 1.5,
+    borderRadius: 0.75,
+    typography: 'body2',
+    fontWeight: 'fontWeightMedium',
+    color: theme.vars.palette.text.secondary,
+    minHeight: 44,
+    ...(isActived && {
+      fontWeight: 'fontWeightSemiBold',
+      color: theme.vars.palette.primary.main,
+      bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
+      '&:hover': {
+        bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
+      },
+    }),
+  });
+
+  if (!children.length) {
+    if (!item.path) {
+      return null;
+    }
+
+    return (
+      <ListItem disableGutters disablePadding>
+        <ListItemButton disableGutters component={RouterLink} href={item.path} sx={[buttonSx]}>
+          <Box component="span" sx={{ width: 24, height: 24 }}>
+            {item.icon}
+          </Box>
+
+          <Box component="span" sx={{ flexGrow: 1 }}>
+            {item.title}
+          </Box>
+
+          {item.info && item.info}
+        </ListItemButton>
+      </ListItem>
+    );
+  }
+
+  return (
+    <Fragment>
+      <ListItem disableGutters disablePadding>
+        <ListItemButton
+          disableGutters
+          onClick={() => setOpen((prevValue) => !prevValue)}
+          sx={[buttonSx]}
+        >
+          <Box component="span" sx={{ width: 24, height: 24 }}>
+            {item.icon}
+          </Box>
+
+          <Box component="span" sx={{ flexGrow: 1 }}>
+            {item.title}
+          </Box>
+
+          <Iconify
+            width={16}
+            icon={open ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ color: 'text.disabled' }}
+          />
+        </ListItemButton>
+      </ListItem>
+
+      {open && (
+        <Box
+          component="ul"
+          sx={{
+            gap: 0.5,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {children.map((child) => {
+            const childActive = child.path === pathname;
+
+            if (!child.path) {
+              return null;
+            }
+
+            return (
+              <ListItem disableGutters disablePadding key={child.title}>
+                <ListItemButton
+                  disableGutters
+                  component={RouterLink}
+                  href={child.path}
+                  sx={[
+                    (theme) => ({
+                      pl: 2,
+                      py: 1,
+                      gap: 2,
+                      pr: 1.5,
+                      borderRadius: 0.75,
+                      typography: 'body2',
+                      fontWeight: 'fontWeightMedium',
+                      color: theme.vars.palette.text.secondary,
+                      minHeight: 40,
+                      ...(childActive && {
+                        fontWeight: 'fontWeightSemiBold',
+                        color: theme.vars.palette.primary.main,
+                        bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
+                        '&:hover': {
+                          bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
+                        },
+                      }),
+                    }),
+                  ]}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        bgcolor: childActive ? 'primary.main' : 'text.disabled',
+                      }}
+                    />
+                  </Box>
+
+                  <Box component="span" sx={{ flexGrow: 1 }}>
+                    {child.title}
+                  </Box>
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </Box>
+      )}
+    </Fragment>
   );
 }
