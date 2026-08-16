@@ -12,6 +12,7 @@ import { Chart, useChart } from 'src/components/chart';
 type Props = CardProps & {
   title?: string;
   subheader?: string;
+  type?: 'bar' | 'area' | 'line';
   chart: {
     colors?: string[];
     categories?: string[];
@@ -23,7 +24,7 @@ type Props = CardProps & {
   };
 };
 
-export function AnalyticsWebsiteVisits({ title, subheader, chart, sx, ...other }: Props) {
+export function AnalyticsWebsiteVisits({ title, subheader, type = 'bar', chart, sx, ...other }: Props) {
   const theme = useTheme();
 
   const chartColors = chart.colors ?? [
@@ -45,7 +46,7 @@ export function AnalyticsWebsiteVisits({ title, subheader, chart, sx, ...other }
       <CardHeader title={title} subheader={subheader} />
 
       <Chart
-        type="bar"
+        type={type}
         series={chart.series}
         options={chartOptions}
         slotProps={{ loading: { p: 2.5 } }}
@@ -53,7 +54,7 @@ export function AnalyticsWebsiteVisits({ title, subheader, chart, sx, ...other }
           pl: 1,
           py: 2.5,
           pr: 2.5,
-          height: 364,
+          height: 440,
         }}
       />
     </Card>
