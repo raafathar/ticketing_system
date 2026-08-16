@@ -98,4 +98,31 @@ export default {
   'custom:menu-duotone': {
     body: '<path fill="currentColor" opacity="0.4" d="M15.7798 4.5H5.2202C4.27169 4.5 3.5 5.06057 3.5 5.75042C3.5 6.43943 4.27169 7 5.2202 7H15.7798C16.7283 7 17.5 6.43943 17.5 5.75042C17.5 5.06054 16.7283 4.5 15.7798 4.5Z" ></path> <path fill="currentColor" d="M18.7798 10.75H8.2202C7.27169 10.75 6.5 11.3106 6.5 12.0004C6.5 12.6894 7.27169 13.25 8.2202 13.25H18.7798C19.7283 13.25 20.5 12.6894 20.5 12.0004C20.5 11.3105 19.7283 10.75 18.7798 10.75Z" ></path> <path fill="currentColor" d="M15.7798 17H5.2202C4.27169 17 3.5 17.5606 3.5 18.2504C3.5 18.9394 4.27169 19.5 5.2202 19.5H15.7798C16.7283 19.5 17.5 18.9394 17.5 18.2504C17.5 17.5606 16.7283 17 15.7798 17Z" ></path>',
   },
+  'solar:alt-arrow-left-outline': {
+    body: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 5l-7 7l7 7"/>',
+  },
+  'solar:file-bold': {
+    body: '<path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm1 9H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2m0 4H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2"/>',
+  },
+  'solar:user-circle-bold': {
+    body: '<path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20M7.07 18.28A4.38 4.38 0 0 1 12 14.5a4.38 4.38 0 0 1 4.93 3.78A7.96 7.96 0 0 1 12 20a7.96 7.96 0 0 1-4.93-1.72M12 13a3.5 3.5 0 1 1 0-7a3.5 3.5 0 0 1 0 7"/>',
+  },
+  'solar:buildings-2-bold': {
+    body: '<path fill="currentColor" d="M6 2a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zm2.5 4h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m0 3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1M12 6h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m0 3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m3.5-3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m0 3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1M8.5 15h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m0 3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1M12 15h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m0 3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m3.5-3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1m0 3h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1 0-1"/>',
+  },
+  'solar:map-point-bold': {
+    body: '<path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7m0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5"/>',
+  },
+  'solar:mail-bold': {
+    body: '<path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m8.06 6.72l7.97-4.2a.6.6 0 0 0-.9-.53L12 10.97L4.87 5.99a.6.6 0 0 0-.9.53l7.97 4.2a.8.8 0 0 0 .12 0z"/>',
+  },
+  'solar:widget-bold': {
+    body: '<path fill="currentColor" d="M8 2H6a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2m10 0h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2M8 12H6a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2m10 0h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2"/>',
+  },
+  'solar:calendar-bold': {
+    body: '<path fill="currentColor" d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 16H5V9h14z"/>',
+  },
+  'solar:clock-circle-bold': {
+    body: '<path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20m4 10h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v3h3a1 1 0 0 1 0 2"/>',
+  },
 };

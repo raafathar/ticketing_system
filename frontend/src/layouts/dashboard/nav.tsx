@@ -163,7 +163,9 @@ type NavListItemProps = {
 function NavListItem({ item, pathname }: NavListItemProps) {
   const children = item.children ?? [];
   const isChildActive = children.some((child) => child.path === pathname);
-  const isActived = item.path === pathname || isChildActive;
+  const isParentPathActive =
+    !!item.path && item.path !== '/' && pathname.startsWith(`${item.path}/`);
+  const isActived = item.path === pathname || isChildActive || isParentPathActive;
 
   const [open, setOpen] = useState(isChildActive);
 

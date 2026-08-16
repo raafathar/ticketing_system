@@ -15,31 +15,47 @@ import { fDate } from 'src/utils/format-time';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
+import {
+  slaColor,
+  slaLabel,
+  statusColor,
+  statusLabel,
+  priorityColor,
+  priorityLabel,
+} from './utils';
+
 // ----------------------------------------------------------------------
 
-export type CategoryProps = {
+export type TicketProps = {
   id: string;
-  name: string;
-  parent: string;
+  ticketNumber: string;
+  title: string;
+  requester: string;
+  assignee: string;
+  category: string;
+  priority: string;
   status: string;
+  slaStatus: string;
   createdAt: string;
 };
 
-type CategoryTableRowProps = {
-  row: CategoryProps;
+type TicketTableRowProps = {
+  row: TicketProps;
   selected: boolean;
   onSelectRow: () => void;
+  onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 };
 
-export function CategoryTableRow({
+export function TicketTableRow({
   row,
   selected,
   onSelectRow,
+  onView,
   onEdit,
   onDelete,
-}: CategoryTableRowProps) {
+}: TicketTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -65,20 +81,50 @@ export function CategoryTableRow({
               alignItems: 'center',
             }}
           >
-            <Typography variant="subtitle2" noWrap>
-              {row.name}
-            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="subtitle2"
+                noWrap
+                sx={{
+                  cursor: 'pointer',
+                  color: 'primary.main',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+                onClick={onView}
+              >
+                {row.ticketNumber}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
+                {row.title}
+              </Typography>
+            </Box>
           </Box>
         </TableCell>
 
         <TableCell>
           <Typography variant="body2" color="text.secondary">
-            {row.parent}
+            {row.requester}
           </Typography>
         </TableCell>
 
         <TableCell>
-          <Label color={(row.status === 'inactive' && 'error') || 'success'}>{row.status}</Label>
+          <Typography variant="body2" color="text.secondary">
+            {row.assignee}
+          </Typography>
+        </TableCell>
+
+        <TableCell>{row.category}</TableCell>
+
+        <TableCell>
+          <Label color={priorityColor(row.priority)}>{priorityLabel(row.priority)}</Label>
+        </TableCell>
+
+        <TableCell>
+          <Label color={statusColor(row.status)}>{statusLabel(row.status)}</Label>
+        </TableCell>
+
+        <TableCell>
+          <Label color={slaColor(row.slaStatus)}>{slaLabel(row.slaStatus)}</Label>
         </TableCell>
 
         <TableCell>{fDate(row.createdAt)}</TableCell>
@@ -113,6 +159,16 @@ export function CategoryTableRow({
             },
           }}
         >
+          <MenuItem
+            onClick={() => {
+              handleClosePopover();
+              onView?.();
+            }}
+          >
+            <Iconify icon="solar:eye-bold" />
+            View
+          </MenuItem>
+
           <MenuItem
             onClick={() => {
               handleClosePopover();
