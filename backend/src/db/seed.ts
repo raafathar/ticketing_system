@@ -6,6 +6,7 @@ import { db } from './index.js';
 import {
   departments,
   locations,
+  parentCategories,
   slaPolicies,
   ticketCategories,
   tickets,
@@ -31,7 +32,7 @@ const slaDefaults: { priority: string; response: number; resolution: number }[] 
 async function main() {
   console.log('Seeding database...');
 
-  await db.execute(sql`TRUNCATE TABLE ticket_attachments, ticket_comments, ticket_activity_logs, notifications, audit_logs, tickets, ticket_categories, sla_policies, users, departments, locations RESTART IDENTITY CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE ticket_attachments, ticket_comments, ticket_activity_logs, notifications, audit_logs, tickets, ticket_categories, parent_categories, sla_policies, users, departments, locations RESTART IDENTITY CASCADE`);
 
   const deptRows = await db
     .insert(departments)
@@ -112,14 +113,16 @@ async function main() {
     .returning();
   const userMap = Object.fromEntries(userRows.map((u) => [u.email, u]));
 
+  const parentRows = await db
+    .insert(parentCategories)
+    .values(Object.keys(categoryTree).map((name) => ({ name })))
+    .returning();
+  const parentMap = Object.fromEntries(parentRows.map((p) => [p.name, p.id]));
+
   for (const [parent, children] of Object.entries(categoryTree)) {
-    const [p] = await db
-      .insert(ticketCategories)
-      .values({ name: parent })
-      .returning();
     await db.insert(
       ticketCategories
-    ).values(children.map((c) => ({ name: c, parentId: p.id })));
+    ).values(children.map((c) => ({ name: c, parentId: parentMap[parent] })));
   }
 
   await db.insert(slaPolicies).values(

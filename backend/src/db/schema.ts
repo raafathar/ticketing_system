@@ -7,7 +7,6 @@ import {
   timestamp,
   uniqueIndex,
   varchar,
-  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
 import { relations } from 'drizzle-orm';
@@ -41,12 +40,19 @@ export const locations = pgTable('locations', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const parentCategories = pgTable('parent_categories', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar('name', { length: 255 }).notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const ticketCategories = pgTable(
   'ticket_categories',
   {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     name: varchar('name', { length: 255 }).notNull(),
-    parentId: integer('parent_id').references((): AnyPgColumn => ticketCategories.id),
+    parentId: integer('parent_id').references(() => parentCategories.id),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -183,13 +189,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   ticketsAssigned: many(tickets, { relationName: 'assignee' }),
 }));
 
-export const ticketCategoriesRelations = relations(ticketCategories, ({ many, one }) => ({
-  parent: one(ticketCategories, {
+export const parentCategoriesRelations = relations(parentCategories, ({ many }) => ({
+  categories: many(ticketCategories),
+}));
+
+export const ticketCategoriesRelations = relations(ticketCategories, ({ one }) => ({
+  parent: one(parentCategories, {
     fields: [ticketCategories.parentId],
-    references: [ticketCategories.id],
-    relationName: 'parent',
+    references: [parentCategories.id],
   }),
-  children: many(ticketCategories, { relationName: 'parent' }),
 }));
 
 export const ticketsRelations = relations(tickets, ({ one, many }) => ({
@@ -248,6 +256,7 @@ export type NewUser = typeof users.$inferInsert;
 export type Ticket = typeof tickets.$inferSelect;
 export type NewTicket = typeof tickets.$inferInsert;
 export type TicketCategory = typeof ticketCategories.$inferSelect;
+export type ParentCategory = typeof parentCategories.$inferSelect;
 export type SlaPolicy = typeof slaPolicies.$inferSelect;
 export type TicketComment = typeof ticketComments.$inferSelect;
 export type TicketAttachment = typeof ticketAttachments.$inferSelect;
