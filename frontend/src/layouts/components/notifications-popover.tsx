@@ -1,6 +1,7 @@
+import type { Notification } from 'src/api/notifications';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
@@ -17,50 +18,82 @@ import ListSubheader from '@mui/material/ListSubheader';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
 
+import { useRouter } from 'src/routes/hooks';
+
 import { fToNow } from 'src/utils/format-time';
+
+import { notificationsApi } from 'src/api/notifications';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
 // ----------------------------------------------------------------------
 
-type NotificationItemProps = {
-  id: string;
-  type: string;
-  title: string;
-  isUnRead: boolean;
-  description: string;
-  avatarUrl: string | null;
-  postedAt: string | number | null;
-};
+export function NotificationsPopover({ sx, ...other }: IconButtonProps) {
+  const router = useRouter();
 
-export type NotificationsPopoverProps = IconButtonProps & {
-  data?: NotificationItemProps[];
-};
-
-export function NotificationsPopover({ data = [], sx, ...other }: NotificationsPopoverProps) {
-  const [notifications, setNotifications] = useState(data);
-
-  const totalUnRead = notifications.filter((item) => item.isUnRead === true).length;
-
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
-  const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    setOpenPopover(event.currentTarget);
+  const unreadItems = notifications.filter((item) => !item.isRead);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const res = await notificationsApi.list();
+      setNotifications(res.items);
+      setUnreadCount(res.unreadCount);
+    } catch {
+      // keep previous data on error
+    }
   }, []);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
+  const handleOpenPopover = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      setOpenPopover(event.currentTarget);
+      loadNotifications();
+    },
+    [loadNotifications]
+  );
 
   const handleClosePopover = useCallback(() => {
     setOpenPopover(null);
   }, []);
 
-  const handleMarkAllAsRead = useCallback(() => {
-    const updatedNotifications = notifications.map((notification) => ({
-      ...notification,
-      isUnRead: false,
-    }));
+  const handleMarkAllAsRead = useCallback(async () => {
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    try {
+      await notificationsApi.markAllRead();
+    } catch {
+      // ignore
+    }
+  }, []);
 
-    setNotifications(updatedNotifications);
-  }, [notifications]);
+  const handleClickItem = useCallback(
+    async (notification: Notification) => {
+      if (!notification.isRead) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item))
+        );
+        try {
+          await notificationsApi.markRead(notification.id);
+        } catch {
+          // ignore
+        }
+      }
+      handleClosePopover();
+      if (notification.ticketId) {
+        router.push(`/tickets/${notification.ticketId}`);
+      }
+    },
+    [handleClosePopover, router]
+  );
 
   return (
     <>
@@ -70,7 +103,7 @@ export function NotificationsPopover({ data = [], sx, ...other }: NotificationsP
         sx={sx}
         {...other}
       >
-        <Badge badgeContent={totalUnRead} color="error">
+        <Badge badgeContent={unreadCount} color="error">
           <Iconify width={24} icon="solar:bell-bing-bold-duotone" />
         </Badge>
       </IconButton>
@@ -104,12 +137,12 @@ export function NotificationsPopover({ data = [], sx, ...other }: NotificationsP
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="subtitle1">Notifications</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              You have {totalUnRead} unread messages
+              Anda memiliki {unreadCount} notifikasi belum dibaca
             </Typography>
           </Box>
 
-          {totalUnRead > 0 && (
-            <Tooltip title=" Mark all as read">
+          {unreadCount > 0 && (
+            <Tooltip title="Tandai semua terbaca">
               <IconButton color="primary" onClick={handleMarkAllAsRead}>
                 <Iconify icon="eva:done-all-fill" />
               </IconButton>
@@ -120,38 +153,61 @@ export function NotificationsPopover({ data = [], sx, ...other }: NotificationsP
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Scrollbar fillContent sx={{ minHeight: 240, maxHeight: { xs: 360, sm: 'none' } }}>
-          <List
-            disablePadding
-            subheader={
-              <ListSubheader disableSticky sx={{ py: 1, px: 2.5, typography: 'overline' }}>
-                New
-              </ListSubheader>
-            }
-          >
-            {notifications.slice(0, 2).map((notification) => (
-              <NotificationItem key={notification.id} notification={notification} />
-            ))}
-          </List>
+          {unreadItems.length > 0 && (
+            <List
+              disablePadding
+              subheader={
+                <ListSubheader disableSticky sx={{ py: 1, px: 2.5, typography: 'overline' }}>
+                  Baru
+                </ListSubheader>
+              }
+            >
+              {unreadItems.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onClick={() => handleClickItem(notification)}
+                />
+              ))}
+            </List>
+          )}
 
-          <List
-            disablePadding
-            subheader={
-              <ListSubheader disableSticky sx={{ py: 1, px: 2.5, typography: 'overline' }}>
-                Before that
-              </ListSubheader>
-            }
-          >
-            {notifications.slice(2, 5).map((notification) => (
-              <NotificationItem key={notification.id} notification={notification} />
-            ))}
-          </List>
+          {notifications.length - unreadItems.length > 0 && (
+            <List
+              disablePadding
+              subheader={
+                <ListSubheader disableSticky sx={{ py: 1, px: 2.5, typography: 'overline' }}>
+                  Sebelumnya
+                </ListSubheader>
+              }
+            >
+              {notifications
+                .filter((item) => item.isRead)
+                .map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onClick={() => handleClickItem(notification)}
+                  />
+                ))}
+            </List>
+          )}
+
+          {notifications.length === 0 && (
+            <Box sx={{ p: 5, textAlign: 'center' }}>
+              <Iconify icon="solar:bell-bing-bold-duotone" width={32} sx={{ color: 'text.disabled' }} />
+              <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                Belum ada notifikasi
+              </Typography>
+            </Box>
+          )}
         </Scrollbar>
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Box sx={{ p: 1 }}>
-          <Button fullWidth disableRipple color="inherit">
-            View all
+          <Button fullWidth disableRipple color="inherit" onClick={handleClosePopover}>
+            Tutup
           </Button>
         </Box>
       </Popover>
@@ -161,25 +217,30 @@ export function NotificationsPopover({ data = [], sx, ...other }: NotificationsP
 
 // ----------------------------------------------------------------------
 
-function NotificationItem({ notification }: { notification: NotificationItemProps }) {
-  const { avatarUrl, title } = renderContent(notification);
-
+function NotificationItem({
+  notification,
+  onClick,
+}: {
+  notification: Notification;
+  onClick: () => void;
+}) {
   return (
     <ListItemButton
+      onClick={onClick}
       sx={{
         py: 1.5,
         px: 2.5,
         mt: '1px',
-        ...(notification.isUnRead && {
+        ...(!notification.isRead && {
           bgcolor: 'action.selected',
         }),
       }}
     >
       <ListItemAvatar>
-        <Avatar sx={{ bgcolor: 'background.neutral' }}>{avatarUrl}</Avatar>
+        <NotificationAvatar type={notification.type} />
       </ListItemAvatar>
       <ListItemText
-        primary={title}
+        primary={notification.title}
         secondary={
           <Typography
             variant="caption"
@@ -192,7 +253,7 @@ function NotificationItem({ notification }: { notification: NotificationItemProp
             }}
           >
             <Iconify width={14} icon="solar:clock-circle-outline" />
-            {fToNow(notification.postedAt)}
+            {fToNow(notification.createdAt)}
           </Typography>
         }
       />
@@ -202,58 +263,23 @@ function NotificationItem({ notification }: { notification: NotificationItemProp
 
 // ----------------------------------------------------------------------
 
-function renderContent(notification: NotificationItemProps) {
-  const title = (
-    <Typography variant="subtitle2">
-      {notification.title}
-      <Typography component="span" variant="body2" sx={{ color: 'text.secondary' }}>
-        &nbsp; {notification.description}
-      </Typography>
-    </Typography>
-  );
-
-  if (notification.type === 'order-placed') {
-    return {
-      avatarUrl: (
-        <img
-          alt={notification.title}
-          src="/assets/icons/notification/ic-notification-package.svg"
-        />
-      ),
-      title,
-    };
-  }
-  if (notification.type === 'order-shipped') {
-    return {
-      avatarUrl: (
-        <img
-          alt={notification.title}
-          src="/assets/icons/notification/ic-notification-shipping.svg"
-        />
-      ),
-      title,
-    };
-  }
-  if (notification.type === 'mail') {
-    return {
-      avatarUrl: (
-        <img alt={notification.title} src="/assets/icons/notification/ic-notification-mail.svg" />
-      ),
-      title,
-    };
-  }
-  if (notification.type === 'chat-message') {
-    return {
-      avatarUrl: (
-        <img alt={notification.title} src="/assets/icons/notification/ic-notification-chat.svg" />
-      ),
-      title,
-    };
-  }
-  return {
-    avatarUrl: notification.avatarUrl ? (
-      <img alt={notification.title} src={notification.avatarUrl} />
-    ) : null,
-    title,
+function NotificationAvatar({ type }: { type: string }) {
+  const iconByType: Record<string, string> = {
+    TICKET_CREATED: '/assets/icons/notification/ic-notification-package.svg',
+    COMMENT: '/assets/icons/notification/ic-notification-chat.svg',
+    ASSIGNED: '/assets/icons/notification/ic-notification-shipping.svg',
+    STATUS_CHANGED: '/assets/icons/notification/ic-notification-mail.svg',
   };
+
+  const src = iconByType[type];
+
+  return (
+    <Avatar sx={{ bgcolor: 'background.neutral' }}>
+      {src ? (
+        <img alt={type} src={src} />
+      ) : (
+        <Iconify icon="solar:bell-bing-bold-duotone" width={20} sx={{ color: 'text.secondary' }} />
+      )}
+    </Avatar>
+  );
 }
