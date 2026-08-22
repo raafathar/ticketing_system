@@ -37,6 +37,7 @@ IT Helpdesk / Ticketing System - Full stack application for managing internal su
 
 ### Authentication
 
+![Auth](docs/image/user.png)
 - Login / Logout with JWT access tokens
 - Session management with `me` endpoint
 - Account activation status check
@@ -44,6 +45,7 @@ IT Helpdesk / Ticketing System - Full stack application for managing internal su
 
 ### Ticket Management
 
+![Ticket](docs/image/ticket.png)
 - Create tickets with auto-generated ticket numbers
 - SLA response/deadline calculation based on priority
 - Status workflow with valid transitions (NEW → OPEN → IN_PROGRESS → PENDING → RESOLVED → CLOSED)
@@ -54,17 +56,23 @@ IT Helpdesk / Ticketing System - Full stack application for managing internal su
 - File attachments (up to 10 files per ticket)
 - Ticket assignment to technicians (admin/technician only)
 - Status change with transition validation
+
+![Audit](docs/image/audit_logs.png)
 - Audit logging for all ticket actions
 
 ### Reference Data
 
+![Category](docs/image/category.png) ![Department](docs/image/departement.png) ![Location](docs/image/location.png) ![Parent Category](docs/image/parent_category.png)
 - Category & Parent Category management
 - Department management
 - Location management
 - SLA policy configuration
 
+![SLA](docs/image/sla.png)
+
 ### Dashboard & Reporting
 
+![Dashboard](docs/image/dashboard.png)
 - Ticket statistics and charts
 - Real-time status overview
 - Activity tracking
